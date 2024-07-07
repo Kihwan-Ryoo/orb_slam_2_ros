@@ -73,7 +73,7 @@ const int PATCH_SIZE = 31;
 const int HALF_PATCH_SIZE = 15;
 const int EDGE_THRESHOLD = 19;
 
-
+// Calculates the angle of a keypoint in an image
 static float IC_Angle(const Mat& image, Point2f pt,  const vector<int> & u_max)
 {
     int m_01 = 0, m_10 = 0;
@@ -102,6 +102,8 @@ static float IC_Angle(const Mat& image, Point2f pt,  const vector<int> & u_max)
 
     return fastAtan2((float)m_01, (float)m_10);
 }
+// The calculated orientation angle is used to rotate the BRIEF descriptor.
+// This rotation ensures that the descriptor is aligned with the dominant gradient direction, making it invariant to image rotation.
 
 
 const float factorPI = (float)(CV_PI/180.f);
@@ -469,6 +471,7 @@ ORBextractor::ORBextractor(int _nfeatures, float _scaleFactor, int _nlevels,
     }
 }
 
+// Assigns an orientation to each keypoint based on image gradients
 static void computeOrientation(const Mat& image, vector<KeyPoint>& keypoints, const vector<int>& umax)
 {
     for (vector<KeyPoint>::iterator keypoint = keypoints.begin(),

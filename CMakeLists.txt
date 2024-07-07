@@ -26,6 +26,7 @@ tf
 tf2_geometry_msgs
 tf2_ros
 sensor_msgs
+nav_msgs
 dynamic_reconfigure
 message_generation
 )

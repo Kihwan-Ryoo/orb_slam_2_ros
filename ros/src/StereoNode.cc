@@ -28,8 +28,8 @@ int main(int argc, char **argv)
 
 
 StereoNode::StereoNode (const ORB_SLAM2::System::eSensor sensor, ros::NodeHandle &node_handle, image_transport::ImageTransport &image_transport) : Node (sensor, node_handle, image_transport) {
-    left_sub_ = new message_filters::Subscriber<sensor_msgs::Image> (node_handle, "image_left/image_color_rect", 1);
-    right_sub_ = new message_filters::Subscriber<sensor_msgs::Image> (node_handle, "image_right/image_color_rect", 1);
+    left_sub_ = new message_filters::Subscriber<sensor_msgs::Image> (node_handle, "/cam0/image_raw", 1);
+    right_sub_ = new message_filters::Subscriber<sensor_msgs::Image> (node_handle, "/cam1/image_raw", 1);
     camera_info_topic_ = "image_left/camera_info";
 
     sync_ = new message_filters::Synchronizer<sync_pol> (sync_pol(10), *left_sub_, *right_sub_);
@@ -63,6 +63,7 @@ void StereoNode::ImageCallback (const sensor_msgs::ImageConstPtr& msgLeft, const
 
   current_frame_time_ = msgLeft->header.stamp;
 
+  // Tracks the stereo images
   orb_slam_->TrackStereo(cv_ptrLeft->image, cv_ptrRight->image, cv_ptrLeft->header.stamp.toSec());
 
   Update ();

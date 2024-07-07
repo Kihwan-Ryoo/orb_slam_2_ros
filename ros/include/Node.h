@@ -46,6 +46,8 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <std_msgs/Bool.h>
+#include <nav_msgs/Path.h>
+#include <tf/transform_broadcaster.h>
 
 #include "System.h"
 
@@ -69,6 +71,7 @@ class Node
     void PublishMapPoints (std::vector<ORB_SLAM2::MapPoint*> map_points);
     void PublishPositionAsTransform (cv::Mat position);
     void PublishPositionAsPoseStamped(cv::Mat position);
+    void PublishPath(cv::Mat position);
     void PublishGBAStatus (bool gba_status);
     void PublishRenderedImage (cv::Mat image);
     void ParamsChangedCallback(orb_slam2_ros::dynamic_reconfigureConfig &config, uint32_t level);
@@ -88,6 +91,7 @@ class Node
     image_transport::Publisher rendered_image_publisher_;
     ros::Publisher map_points_publisher_;
     ros::Publisher pose_publisher_;
+    ros::Publisher path_publisher_;
     ros::Publisher status_gba_publisher_;
 
     ros::ServiceServer service_server_;
@@ -107,6 +111,7 @@ class Node
     bool publish_pointcloud_param_;
     bool publish_tf_param_;
     bool publish_pose_param_;
+    bool publish_path_param_;
     int min_observations_per_point_;
 };
 
