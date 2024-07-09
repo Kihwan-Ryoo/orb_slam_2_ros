@@ -31,9 +31,9 @@ dynamic_reconfigure
 message_generation
 )
 
-find_package(OpenCV 4.0 QUIET)
+find_package(OpenCV 4 QUIET)
 if(NOT OpenCV_FOUND)
-   find_package(OpenCV 3.0 QUIET)
+   find_package(OpenCV 3 QUIET)
    if(NOT OpenCV_FOUND)
       find_package(OpenCV 2.4.3 QUIET)
       if(NOT OpenCV_FOUND)
@@ -138,6 +138,15 @@ add_dependencies (${PROJECT_NAME}_mono ${PROJECT_NAME} ${PROJECT_NAME}_gencfg)
 target_link_libraries(${PROJECT_NAME}_mono
 ${LIBS_ROS}
 )
+
+# add_executable (${PROJECT_NAME}_semantic_mono
+# ros/src/SemanticMonoNode.cc
+# ros/src/Node.cc
+# )
+# add_dependencies (${PROJECT_NAME}_semantic_mono ${PROJECT_NAME} ${PROJECT_NAME}_gencfg)
+# target_link_libraries(${PROJECT_NAME}_semantic_mono
+# ${LIBS_ROS}
+# )
 
 add_executable (${PROJECT_NAME}_stereo
 ros/src/StereoNode.cc

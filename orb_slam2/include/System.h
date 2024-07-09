@@ -54,7 +54,8 @@ public:
     enum eSensor{
         MONOCULAR=0,
         STEREO=1,
-        RGBD=2
+        RGBD=2,
+        SemanticMONOCULAR=3
     };
 
 public:
@@ -78,6 +79,8 @@ public:
     // Input images: RGB (CV_8UC3) or grayscale (CV_8U). RGB is converted to grayscale.
     // Returns the camera pose (empty if tracking fails).
     void TrackMonocular(const cv::Mat &im, const double &timestamp);
+
+    void TrackSemanticMonocular(const cv::Mat &im, const cv::Mat &semantic_im, const double &timestamp);
 
     // Returns true if there have been a big map change (loop closure, global BA)
     // since last call to this function

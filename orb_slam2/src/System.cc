@@ -53,6 +53,8 @@ System::System(const string strVocFile, const eSensor sensor, ORBParameters& par
         cout << "Stereo" << endl;
     else if(mSensor==RGBD)
         cout << "RGB-D" << endl;
+    else if(mSensor==SemanticMONOCULAR)
+        cout << "Semantic Monocular" << endl;
 
     //Load ORB Vocabulary
     cout << endl << "Loading ORB Vocabulary." << endl;
@@ -267,6 +269,58 @@ void System::TrackMonocular(const cv::Mat &im, const double &timestamp)
     }
 
     cv::Mat Tcw = mpTracker->GrabImageMonocular(im,timestamp);
+
+    unique_lock<mutex> lock2(mMutexState);
+    mTrackingState = mpTracker->mState;
+    mTrackedMapPoints = mpTracker->mCurrentFrame.mvpMapPoints;
+    mTrackedKeyPointsUn = mpTracker->mCurrentFrame.mvKeysUn;
+
+    current_position_ = Tcw;
+}
+
+void System::TrackSemanticMonocular(const cv::Mat &im, const cv::Mat &semantic_im, const double &timestamp)
+{
+    if(mSensor!=SemanticMONOCULAR)
+    {
+        cerr << "ERROR: you called TrackSemanticMonocular but input sensor was not set to SemanticMONOCULAR." << endl;
+        exit(-1);
+    }
+
+    // Check mode change
+    {
+        unique_lock<mutex> lock(mMutexMode);
+        if(mbActivateLocalizationMode)
+        {
+            mpLocalMapper->RequestStop();
+
+            // Wait until Local Mapping has effectively stopped
+            while(!mpLocalMapper->isStopped())
+            {
+                std::this_thread::sleep_for(std::chrono::microseconds(1000));
+            }
+
+            mpTracker->InformOnlyTracking(true);
+            mbActivateLocalizationMode = false;
+        }
+        if(mbDeactivateLocalizationMode)
+        {
+            mpTracker->InformOnlyTracking(false);
+            mpLocalMapper->Release();
+            mbDeactivateLocalizationMode = false;
+        }
+    }
+
+    // Check reset
+    {
+    unique_lock<mutex> lock(mMutexReset);
+    if(mbReset)
+    {
+        mpTracker->Reset();
+        mbReset = false;
+    }
+    }
+
+    cv::Mat Tcw = mpTracker->GrabImageSemanticMonocular(im, semantic_im, timestamp);
 
     unique_lock<mutex> lock2(mMutexState);
     mTrackingState = mpTracker->mState;
