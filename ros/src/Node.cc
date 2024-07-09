@@ -207,7 +207,6 @@ void Node::PublishPath (cv::Mat position) {
   tf2::Stamped<tf2::Transform> tf_position_target_stamped;
   tf_position_target_stamped = tf2::Stamped<tf2::Transform>(tf_position_target, current_frame_time_, map_frame_id_param_);
   geometry_msgs::PoseStamped pose_msg;
-  nav_msgs::Path path_msg;
   // publish path
   pose_msg.header.stamp = current_frame_time_;
   pose_msg.header.frame_id = map_frame_id_param_;
@@ -218,10 +217,11 @@ void Node::PublishPath (cv::Mat position) {
   pose_msg.pose.orientation.y = tf_position_target.getRotation().y();
   pose_msg.pose.orientation.z = tf_position_target.getRotation().z();
   pose_msg.pose.orientation.w = tf_position_target.getRotation().w();
-  path_msg.header.stamp = current_frame_time_;
-  path_msg.header.frame_id = map_frame_id_param_;
-  path_msg.poses.push_back(pose_msg);
-  path_publisher_.publish(path_msg);
+  path_msg_.header.stamp = current_frame_time_;
+  path_msg_.header.frame_id = map_frame_id_param_;
+  path_msg_.header.seq = pose_msg.header.seq;
+  path_msg_.poses.push_back(pose_msg);
+  path_publisher_.publish(path_msg_);
 }
 
 void Node::PublishGBAStatus (bool gba_status) {
