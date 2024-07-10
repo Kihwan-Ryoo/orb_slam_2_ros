@@ -33,11 +33,11 @@ void Node::Init () {
   node_handle_.param<std::string>(name_of_node_ + "/voc_file", voc_file_name_param_, "file_not_set");
   node_handle_.param(name_of_node_ + "/load_map", load_map_param_, false);
 
-   // Create a parameters object to pass to the Tracking system
-   ORB_SLAM2::ORBParameters parameters;
-   LoadOrbParameters (parameters);
+  // Create a parameters object to pass to the Tracking system
+  ORB_SLAM2::ORBParameters parameters;
+  LoadOrbParameters(parameters);
 
-  orb_slam_ = new ORB_SLAM2::System (voc_file_name_param_, sensor_, parameters, map_file_name_param_, load_map_param_);
+  orb_slam_ = new ORB_SLAM2::System(voc_file_name_param_, sensor_, parameters, map_file_name_param_, load_map_param_);
 
   // Setup a service for saving the map
   service_server_ = node_handle_.advertiseService(name_of_node_+"/save_map", &Node::SaveMapSrv, this);
@@ -51,21 +51,21 @@ void Node::Init () {
   tfBuffer.reset(new tf2_ros::Buffer);
   tfListener.reset(new tf2_ros::TransformListener(*tfBuffer));
 
-  rendered_image_publisher_ = image_transport_.advertise (name_of_node_+"/debug_image", 1);
+  rendered_image_publisher_ = image_transport_.advertise(name_of_node_+"/debug_image", 1);
   if (publish_pointcloud_param_) {
-    map_points_publisher_ = node_handle_.advertise<sensor_msgs::PointCloud2> (name_of_node_+"/map_points", 1);
+    map_points_publisher_ = node_handle_.advertise<sensor_msgs::PointCloud2>(name_of_node_+"/map_points", 1);
   }
 
   // Enable publishing camera's pose as PoseStamped message
   if (publish_pose_param_) {
-    pose_publisher_ = node_handle_.advertise<geometry_msgs::PoseStamped> (name_of_node_+"/pose", 1);
+    pose_publisher_ = node_handle_.advertise<geometry_msgs::PoseStamped>(name_of_node_+"/pose", 1);
   }
 
   if (publish_path_param_) {
-    path_publisher_ = node_handle_.advertise<nav_msgs::Path> (name_of_node_+"/path", 1);
+    path_publisher_ = node_handle_.advertise<nav_msgs::Path>(name_of_node_+"/path", 1);
   }
 
-  status_gba_publisher_ = node_handle_.advertise<std_msgs::Bool> (name_of_node_+"/gba_running", 1);
+  status_gba_publisher_ = node_handle_.advertise<std_msgs::Bool>(name_of_node_+"/gba_running", 1);
 }
 
 
@@ -86,23 +86,23 @@ void Node::Update () {
     }
   }
 
-  PublishRenderedImage (orb_slam_->DrawCurrentFrame());
+  PublishRenderedImage(orb_slam_->DrawCurrentFrame());
 
   if (publish_pointcloud_param_) {
-    PublishMapPoints (orb_slam_->GetAllMapPoints());
+    PublishMapPoints(orb_slam_->GetAllMapPoints());
   }
 
-  PublishGBAStatus (orb_slam_->isRunningGBA());
+  PublishGBAStatus(orb_slam_->isRunningGBA());
 
 }
 
 
-void Node::PublishMapPoints (std::vector<ORB_SLAM2::MapPoint*> map_points) {
+void Node::PublishMapPoints(std::vector<ORB_SLAM2::MapPoint*> map_points) {
   sensor_msgs::PointCloud2 cloud = MapPointsToPointCloud (map_points);
   map_points_publisher_.publish (cloud);
 }
 
-tf2::Transform Node::TransformToTarget (tf2::Transform tf_in, std::string frame_in, std::string frame_target) {
+tf2::Transform Node::TransformToTarget(tf2::Transform tf_in, std::string frame_in, std::string frame_target) {
   // Transform tf_in from frame_in to frame_target
   tf2::Transform tf_map2orig = tf_in;
   tf2::Transform tf_orig2target;
@@ -157,7 +157,7 @@ tf2::Transform Node::TransformToTarget (tf2::Transform tf_in, std::string frame_
   return tf_map2target;
 }
 
-void Node::PublishPositionAsTransform (cv::Mat position) {
+void Node::PublishPositionAsTransform(cv::Mat position) {
   // Get transform from map to camera frame
   tf2::Transform tf_transform = TransformFromMat(position);
 
@@ -174,7 +174,7 @@ void Node::PublishPositionAsTransform (cv::Mat position) {
   tf_broadcaster.sendTransform(msg);
 }
 
-void Node::PublishPositionAsPoseStamped (cv::Mat position) {
+void Node::PublishPositionAsPoseStamped(cv::Mat position) {
   tf2::Transform tf_position = TransformFromMat(position);
 
   // Make transform from camera frame to target frame
@@ -197,7 +197,7 @@ void Node::PublishPositionAsPoseStamped (cv::Mat position) {
   pose_publisher_.publish(pose_msg);
 }
 
-void Node::PublishPath (cv::Mat position) {
+void Node::PublishPath(cv::Mat position) {
   tf2::Transform tf_position = TransformFromMat(position);
 
   // Make transform from camera frame to target frame
@@ -224,13 +224,13 @@ void Node::PublishPath (cv::Mat position) {
   path_publisher_.publish(path_msg_);
 }
 
-void Node::PublishGBAStatus (bool gba_status) {
+void Node::PublishGBAStatus(bool gba_status) {
   std_msgs::Bool gba_status_msg;
   gba_status_msg.data = gba_status;
   status_gba_publisher_.publish(gba_status_msg);
 }
 
-void Node::PublishRenderedImage (cv::Mat image) {
+void Node::PublishRenderedImage(cv::Mat image) {
   std_msgs::Header header;
   header.stamp = current_frame_time_;
   header.frame_id = map_frame_id_param_;
@@ -239,7 +239,7 @@ void Node::PublishRenderedImage (cv::Mat image) {
 }
 
 
-tf2::Transform Node::TransformFromMat (cv::Mat position_mat) {
+tf2::Transform Node::TransformFromMat(cv::Mat position_mat) {
   cv::Mat rotation(3,3,CV_32F);
   cv::Mat translation(3,1,CV_32F);
 
@@ -247,15 +247,15 @@ tf2::Transform Node::TransformFromMat (cv::Mat position_mat) {
   translation = position_mat.rowRange(0,3).col(3);
 
 
-  tf2::Matrix3x3 tf_camera_rotation (rotation.at<float> (0,0), rotation.at<float> (0,1), rotation.at<float> (0,2),
+  tf2::Matrix3x3 tf_camera_rotation(rotation.at<float> (0,0), rotation.at<float> (0,1), rotation.at<float> (0,2),
                                     rotation.at<float> (1,0), rotation.at<float> (1,1), rotation.at<float> (1,2),
                                     rotation.at<float> (2,0), rotation.at<float> (2,1), rotation.at<float> (2,2)
                                    );
 
-  tf2::Vector3 tf_camera_translation (translation.at<float> (0), translation.at<float> (1), translation.at<float> (2));
+  tf2::Vector3 tf_camera_translation(translation.at<float> (0), translation.at<float> (1), translation.at<float> (2));
 
   //Coordinate transformation matrix from orb coordinate system to ros coordinate system
-  const tf2::Matrix3x3 tf_orb_to_ros (0, 0, 1,
+  const tf2::Matrix3x3 tf_orb_to_ros(0, 0, 1,
                                     -1, 0, 0,
                                      0,-1, 0);
 
@@ -275,7 +275,7 @@ tf2::Transform Node::TransformFromMat (cv::Mat position_mat) {
 }
 
 
-sensor_msgs::PointCloud2 Node::MapPointsToPointCloud (std::vector<ORB_SLAM2::MapPoint*> map_points) {
+sensor_msgs::PointCloud2 Node::MapPointsToPointCloud(std::vector<ORB_SLAM2::MapPoint*> map_points) {
   if (map_points.size() == 0) {
     std::cout << "Map point vector is empty!" << std::endl;
   }
@@ -335,7 +335,7 @@ void Node::ParamsChangedCallback(orb_slam2_ros::dynamic_reconfigureConfig &confi
 }
 
 
-bool Node::SaveMapSrv (orb_slam2_ros::SaveMap::Request &req, orb_slam2_ros::SaveMap::Response &res) {
+bool Node::SaveMapSrv(orb_slam2_ros::SaveMap::Request &req, orb_slam2_ros::SaveMap::Response &res) {
   res.success = orb_slam_->SaveMap(req.name);
 
   if (res.success) {
@@ -348,7 +348,7 @@ bool Node::SaveMapSrv (orb_slam2_ros::SaveMap::Request &req, orb_slam2_ros::Save
 }
 
 
-void Node::LoadOrbParameters (ORB_SLAM2::ORBParameters& parameters) {
+void Node::LoadOrbParameters(ORB_SLAM2::ORBParameters& parameters) {
   //ORB SLAM configuration parameters
   node_handle_.param(name_of_node_ + "/camera_fps", parameters.maxFrames, 30);
   node_handle_.param(name_of_node_ + "/camera_rgb_encoding", parameters.RGB, true);

@@ -42,8 +42,7 @@ Frame::Frame(const Frame &frame)
      mbf(frame.mbf), mb(frame.mb), mThDepth(frame.mThDepth), N(frame.N), mvKeys(frame.mvKeys),
      mvKeysRight(frame.mvKeysRight), mvKeysUn(frame.mvKeysUn),  mvuRight(frame.mvuRight),
      mvDepth(frame.mvDepth), mBowVec(frame.mBowVec), mFeatVec(frame.mFeatVec),
-     mDescriptors(frame.mDescriptors.clone()), mDescriptorsRight(frame.mDescriptorsRight.clone()),
-     mSemanticDescriptors(frame.mSemanticDescriptors.clone()),
+     mDescriptors(frame.mDescriptors.clone()), mDescriptorsRight(frame.mDescriptorsRight.clone()), mSemanticDescriptors(frame.mSemanticDescriptors.clone()),
      mvpMapPoints(frame.mvpMapPoints), mvbOutlier(frame.mvbOutlier), mnId(frame.mnId),
      mpReferenceKF(frame.mpReferenceKF), mnScaleLevels(frame.mnScaleLevels),
      mfScaleFactor(frame.mfScaleFactor), mfLogScaleFactor(frame.mfLogScaleFactor),
@@ -228,8 +227,8 @@ Frame::Frame(const cv::Mat &imGray, const double &timeStamp, ORBextractor* extra
     AssignFeaturesToGrid();
 }
 
-Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imSemanticLeft, const double &timeStamp, ORBextractor* extractor, ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth)
-    :mpORBvocabulary(voc),mpORBextractorLeft(extractorLeft),mpORBextractorRight(static_cast<ORBextractor*>(NULL)),
+Frame::Frame(const cv::Mat &imLeft, const double &timeStamp, const cv::Mat &imSemanticLeft,  ORBextractor* extractor, ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth)
+    :mpORBvocabulary(voc),mpORBextractorLeft(extractor),mpORBextractorRight(static_cast<ORBextractor*>(NULL)),
      mTimeStamp(timeStamp), mK(K.clone()),mDistCoef(distCoef.clone()), mbf(bf), mThDepth(thDepth),
      mpReferenceKF(static_cast<KeyFrame*>(NULL))
 {
@@ -246,18 +245,15 @@ Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imSemanticLeft, const double 
     mvInvLevelSigma2 = mpORBextractorLeft->GetInverseScaleSigmaSquares();
 
     // ORB extraction
-    // thread threadLeft(&Frame::ExtractORB,this,0,imLeft);
-    // thread threadSemanticLeft(&Frame::ExtractSemanticDESCRIPTOR,this,0,imSemanticLeft);
-    // threadLeft.join();
-    // threadSemanticLeft.join();
     ExtractORBnSEMANTIC(0,imLeft,imSemanticLeft); // only 0
+    // -> mvKeys, mDescriptors, mSemanticDescriptors
 
     N = mvKeys.size();
 
     if(mvKeys.empty())
         return;
 
-    UndistortKeyPoints();
+    UndistortKeyPoints(); //-> mvKeysUn
 
     // set no stereo information
     mvuRight = vector<float>(N,-1);
@@ -286,7 +282,7 @@ Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imSemanticLeft, const double 
 
     mb = mbf/fx;
     
-    AssignFeaturesToGrid();
+    AssignFeaturesToGrid(); //-> mGrid[][]
 }
 
 void Frame::AssignFeaturesToGrid()
@@ -317,10 +313,9 @@ void Frame::ExtractORB(int flag, const cv::Mat &im)
 void Frame::ExtractORBnSEMANTIC(int flag, const cv::Mat &im, const cv::Mat &semantic_im)
 {
     if(flag==0)
-        // (*mpORBextractorLeft)(im,cv::Mat(),mvKeys,mDescriptors);
-        (*mpORBextractorLeft)(im,semantic_im,mvKeys,mDescriptors,mSemanticDescriptors);
+        (*mpORBextractorLeft)(im,semantic_im,cv::Mat(),mvKeys,mDescriptors,mSemanticDescriptors); // -> mvKeys, mDescriptors, mSemanticDescriptors
     else
-        (*mpORBextractorRight)(im,cv::Mat(),mvKeysRight,mDescriptorsRight);
+        (*mpORBextractorRight)(im,cv::Mat(),cv::Mat(),mvKeysRight,mDescriptorsRight,mSemanticDescriptors);
 }
 
 void Frame::SetPose(cv::Mat Tcw)
