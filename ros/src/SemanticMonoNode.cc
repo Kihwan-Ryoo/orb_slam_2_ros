@@ -64,7 +64,7 @@ SemanticMonoNode::~SemanticMonoNode () {
 //   Update ();
 // }
 
-void SemanticMonoNode::ImageCallback (const sensor_msgs::ImageConstPtr& left_image, const sensor_msgs::ImageConstPtr& left_semantic_image) {
+void SemanticMonoNode::ImageCallback(const sensor_msgs::ImageConstPtr& left_image, const sensor_msgs::ImageConstPtr& left_semantic_image) {
   cv_bridge::CvImageConstPtr cv_ptrLeft;
   try {
       cv_ptrLeft = cv_bridge::toCvShare(left_image);
@@ -85,6 +85,7 @@ void SemanticMonoNode::ImageCallback (const sensor_msgs::ImageConstPtr& left_ima
 
   // orb_slam_->TrackMonocular(cv_ptrLeft->image,cv_ptrLeft->header.stamp.toSec());
   orb_slam_->TrackSemanticMonocular(cv_ptrLeft->image, cv_ptrSemanticLeft->image, cv_ptrLeft->header.stamp.toSec());
+  // -> System
 
   Update ();
 }

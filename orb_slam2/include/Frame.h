@@ -58,10 +58,12 @@ public:
     Frame(const cv::Mat &imGray, const double &timeStamp, ORBextractor* extractor,ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth);
 
     // Constructor for Semantic Monocular cameras.
-    Frame(const cv::Mat &imLeft, const cv::Mat &imSemanticLeft, const double &timeStamp, ORBextractor* extractorLeft, SEMANTICextractor* extractorSemanticLeft, ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth);
+    Frame(const cv::Mat &imLeft, const cv::Mat &imSemanticLeft, const double &timeStamp, ORBextractor* extractor, ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth);
 
     // Extract ORB on the image. 0 for left image and 1 for right image.
     void ExtractORB(int flag, const cv::Mat &im);
+
+    void ExtractORBnSEMANTIC(const cv::Mat &im, const cv::Mat &semantic_im);
 
     // Extract a novel semantic descriptor from the semantic image.
     // void ExtractSemanticDESCRIPTOR(const cv::Mat &semantic_im);
@@ -154,6 +156,7 @@ public:
 
     // ORB descriptor, each row associated to a keypoint.
     cv::Mat mDescriptors, mDescriptorsRight;
+    cv::Mat mSemanticDescriptors;
 
     // MapPoints associated to keypoints, NULL pointer if no association.
     std::vector<MapPoint*> mvpMapPoints;

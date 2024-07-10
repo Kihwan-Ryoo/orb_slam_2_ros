@@ -59,7 +59,7 @@
 #include <opencv2/features2d/features2d.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <vector>
-
+#include <cmath>
 #include "ORBextractor.h"
 
 
@@ -147,6 +147,117 @@ static void computeOrbDescriptor(const KeyPoint& kpt,
 
     #undef GET_VALUE
 }
+
+// brand-new semantic descriptor
+// static void computeSemanticDescriptor(const KeyPoint& kpt, const Mat& semantic_img, const Point* pattern, uchar* semantic_desc)
+// {
+//     const uchar* center = &semantic_img.at<uchar>(cvRound(kpt.pt.y), cvRound(kpt.pt.x));
+//     const int step = (int)semantic_img.step;
+
+//     #define GET_VALUE(idx) \
+//         center[cvRound(pattern[idx].x)*step + cvRound(pattern[idx].y)]
+
+//     for (int i = 0; i < 32; ++i, pattern += 16)
+//     {
+//         int t0, t1, val;
+//         t0 = GET_VALUE(0); t1 = GET_VALUE(1);
+//         val = t0 < t1;
+//         t0 = GET_VALUE(2); t1 = GET_VALUE(3);
+//         val |= (t0 < t1) << 1;
+//         t0 = GET_VALUE(4); t1 = GET_VALUE(5);
+//         val |= (t0 < t1) << 2;
+//         t0 = GET_VALUE(6); t1 = GET_VALUE(7);
+//         val |= (t0 < t1) << 3;
+//         t0 = GET_VALUE(8); t1 = GET_VALUE(9);
+//         val |= (t0 < t1) << 4;
+//         t0 = GET_VALUE(10); t1 = GET_VALUE(11);
+//         val |= (t0 < t1) << 5;
+//         t0 = GET_VALUE(12); t1 = GET_VALUE(13);
+//         val |= (t0 < t1) << 6;
+//         t0 = GET_VALUE(14); t1 = GET_VALUE(15);
+//         val |= (t0 < t1) << 7;
+
+//         semantic_desc[i] = (uchar)val;
+//     }
+
+//     #undef GET_VALUE
+
+// }
+
+// Define the log-polar sampling pattern (example pattern)
+static const int LOG_POLAR_PATTERN_SIZE = 32;
+static Point log_polar_pattern[LOG_POLAR_PATTERN_SIZE] = {
+    // Define your log-polar sampling points here
+    // Example points (you need to define a full pattern)
+    Point(0, 0), Point(1, 0), Point(0, 1), Point(-1, 0), Point(0, -1), 
+    Point(1, 1), Point(1, -1), Point(-1, 1), Point(-1, -1),
+    // Add more points to complete the pattern
+};
+
+// Function to compute the semantic descriptor
+static void computeSemanticDescriptor(const KeyPoint& kpt,
+                                      const Mat& semantic_img, const Point* pattern,
+                                      uchar* desc)
+{
+    float angle = (float)kpt.angle * factorPI;
+    float a = (float)cos(angle), b = (float)sin(angle);
+
+    const uchar* center = &semantic_img.at<uchar>(cvRound(kpt.pt.y), cvRound(kpt.pt.x));
+    const int step = (int)semantic_img.step;
+
+    #define GET_SEMANTIC_VALUE(idx) \
+        center[cvRound(pattern[idx].x * b + pattern[idx].y * a) * step + \
+               cvRound(pattern[idx].x * a - pattern[idx].y * b)]
+
+    for (int i = 0; i < LOG_POLAR_PATTERN_SIZE; ++i, pattern += 1)
+    {
+        int t0;
+        t0 = GET_SEMANTIC_VALUE(0);
+        desc[i] = (uchar)t0;
+    }
+
+    #undef GET_SEMANTIC_VALUE
+}
+
+// brand-new semantic descriptor using log-polar sampling scheme
+// static void computeSemanticDescriptorLogPolar(const KeyPoint& kpt, const Mat& semantic_img, const Point* pattern, uchar* semantic_desc)
+// {
+//     float angle = (float)kpt.angle*factorPI;
+//     float a = (float)cos(angle), b = (float)sin(angle);
+
+//     const uchar* center = &semantic_img.at<uchar>(cvRound(kpt.pt.y), cvRound(kpt.pt.x));
+//     const int step = (int)semantic_img.step;
+
+//     #define GET_VALUE(idx) \
+//         center[cvRound(pattern[idx].x*b + pattern[idx].y*a)*step + \
+//                cvRound(pattern[idx].x*a - pattern[idx].y*b)]
+
+//     for (int i = 0; i < 32; ++i, pattern += 16)
+//     {
+//         int t0, t1, val;
+//         t0 = GET_VALUE(0); t1 = GET_VALUE(1);
+//         val = t0 < t1;
+//         t0 = GET_VALUE(2); t1 = GET_VALUE(3);
+//         val |= (t0 < t1) << 1;
+//         t0 = GET_VALUE(4); t1 = GET_VALUE(5);
+//         val |= (t0 < t1) << 2;
+//         t0 = GET_VALUE(6); t1 = GET_VALUE(7);
+//         val |= (t0 < t1) << 3;
+//         t0 = GET_VALUE(8); t1 = GET_VALUE(9);
+//         val |= (t0 < t1) << 4;
+//         t0 = GET_VALUE(10); t1 = GET_VALUE(11);
+//         val |= (t0 < t1) << 5;
+//         t0 = GET_VALUE(12); t1 = GET_VALUE(13);
+//         val |= (t0 < t1) << 6;
+//         t0 = GET_VALUE(14); t1 = GET_VALUE(15);
+//         val |= (t0 < t1) << 7;
+
+//         semantic_desc[i] = (uchar)val;
+//     }
+
+//     #undef GET_VALUE
+
+// }
 
 
 static int bit_pattern_31_[256*4] =
@@ -1043,33 +1154,40 @@ static void computeDescriptors(const Mat& image, vector<KeyPoint>& keypoints, Ma
         computeOrbDescriptor(keypoints[i], image, &pattern[0], descriptors.ptr((int)i));
 }
 
-void ORBextractor::operator()( InputArray _image, InputArray _mask, vector<KeyPoint>& _keypoints,
-                      OutputArray _descriptors)
+void ORBextractor::operator()(InputArray _image, InputArray _semantic_img = cv::noArray(), InputArray _mask, vector<KeyPoint>& _keypoints, OutputArray _descriptors, OutputArray _semantic_descriptors = cv::noArray()) // double semantic_threshold = 0.5
 { 
     if(_image.empty())
         return;
+    if(_semantic_img.empty())
+        std::cout << "No semantic image provided" << std::endl;
 
     Mat image = _image.getMat();
-    assert(image.type() == CV_8UC1 );
+    assert(image.type() == CV_8UC1);
+    Mat semantic_image = _semantic_img.getMat();
+    assert(semantic_image.type() == CV_8UC1);
 
     // Pre-compute the scale pyramid
     ComputePyramid(image);
 
-    vector < vector<KeyPoint> > allKeypoints;
+    vector<vector<KeyPoint>> allKeypoints;
     ComputeKeyPointsOctTree(allKeypoints);
     //ComputeKeyPointsOld(allKeypoints);
 
     Mat descriptors;
+    Mat semantic_descriptors;
 
     int nkeypoints = 0;
     for (int level = 0; level < nlevels; ++level)
         nkeypoints += (int)allKeypoints[level].size();
-    if( nkeypoints == 0 )
+    if( nkeypoints == 0 ) {
         _descriptors.release();
-    else
+        _semantic_descriptors.release();
+    } else
     {
         _descriptors.create(nkeypoints, 32, CV_8U);
+        _semantic_descriptors.create(nkeypoints, LOG_POLAR_PATTERN_SIZE, CV_8U);
         descriptors = _descriptors.getMat();
+        semantic_descriptors = _semantic_descriptors.getMat();
     }
 
     _keypoints.clear();
@@ -1090,7 +1208,9 @@ void ORBextractor::operator()( InputArray _image, InputArray _mask, vector<KeyPo
 
         // Compute the descriptors
         Mat desc = descriptors.rowRange(offset, offset + nkeypointsLevel);
+        Mat semantic_desc = semantic_descriptors.rowRange(offset, offset + nkeypointsLevel);
         computeDescriptors(workingMat, keypoints, desc, pattern);
+        computeDescriptors(semantic_image, keypoints, semantic_desc, log_polar_pattern);
 
         offset += nkeypointsLevel;
 
